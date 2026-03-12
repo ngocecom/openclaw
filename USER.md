@@ -19,6 +19,7 @@ _Learn about the person you're helping. Update this as you go._
 
 ### Preferences
 - **Communication:** Direct, concise, no filler words
+- **Addressing:** User = "sếp" (boss), Agent = "em" (junior)
 - **Working Style:** Prefers automation over manual tasks
 - **Primary Channel:** Telegram for messaging
 - **Browser:** Cốc Cốc (preferred), Chrome (fallback)

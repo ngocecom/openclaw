@@ -16,6 +16,7 @@
 
 ### Preferences
 - **Communication Style:** Direct, concise, no filler words
+- **Addressing:** User = "sếp" (boss), Agent = "em" (junior)
 - **Working Hours:** Flexible
 - **Primary Channel:** Telegram
 - **Browser:** Cốc Cốc (preferred), Chrome
