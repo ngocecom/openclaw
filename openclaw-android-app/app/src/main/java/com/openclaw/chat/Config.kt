@@ -61,14 +61,16 @@ object Config {
     const val RECONNECT_DELAY = 5000L
     
     /**
-     * Max message history to store locally
-     */
-    const val MAX_MESSAGE_HISTORY = 500
-    
-    /**
      * Enable debug logging
      */
     const val DEBUG_LOGGING = true
+    
+    /**
+     * NO LOCAL STORAGE
+     * Messages are NOT persisted - they exist only in memory
+     * When app closes, all messages are lost (by design)
+     */
+    const val PERSIST_MESSAGES = false
     
     /**
      * Get base URL for HTTP requests
