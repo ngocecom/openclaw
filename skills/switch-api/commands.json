@@ -1,0 +1,17 @@
+{
+  "commands": {
+    "đổi api": {
+      "handler": "exec",
+      "script": "scripts/switch-api.ps1",
+      "args": ["${provider}"],
+      "description": "Chuyển đổi API provider giữa OpenRouter và Alibaba",
+      "usage": "đổi api <openrouter|alibaba>",
+      "examples": [
+        "đổi api openrouter",
+        "đổi api alibaba"
+      ],
+      "postAction": "restart-gateway",
+      "confirm": false
+    }
+  }
+}
