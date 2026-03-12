@@ -4,6 +4,31 @@
 
 **Auto-Approval:** ENABLED (user approved 2026-03-12)
 **Daily Report Time:** 10:00 AM Vietnam Time (GMT+7)
+**Failover Policy:** Report immediately upon reconnection if scheduled report was missed
+
+---
+
+## 🚨 FAILOVER POLICY
+
+### If Connection Lost at Report Time:
+1. **Mark report as MISSED** in `memory/commit-history.md`
+2. **Retry every 30 minutes** until successful
+3. **Send report IMMEDIATELY** when connection restored
+4. **Note the delay** in report header (e.g., "Scheduled: 10:00 AM, Sent: 11:30 AM")
+
+### Connection Check:
+- Check gateway status every heartbeat (30 min)
+- If gateway unreachable → mark as OFFLINE
+- When gateway back → trigger MISSED reports immediately
+
+### Missed Report Tracking:
+```yaml
+missed_reports:
+  max_retries: unlimited
+  retry_interval: 30 minutes
+  notify_on_reconnect: true
+  include_delay_reason: true
+```
 
 ---
 

@@ -63,6 +63,17 @@ Projects:
 
 ---
 
+## ⚠️ MISSED REPORTS (Connection Issues)
+
+| Scheduled Time | Actual Sent Time | Delay | Reason | Status |
+|----------------|------------------|-------|--------|--------|
+| (none yet) | - | - | - | - |
+
+**Retry Policy:** Every 30 minutes until successful
+**Notification:** Send immediately upon reconnection
+
+---
+
 ## 🔧 CONFIGURATION
 
 ```yaml
