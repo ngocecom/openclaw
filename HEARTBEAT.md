@@ -98,6 +98,23 @@ missed_reports:
 - Always write important info to files
 - Check if Cốc Cốc installation completed
 
+### 🎯 PERSONAL MBA ALIGNMENT CHECK
+
+**Before any significant action, verify:**
+1. Does this create value? (Value Creation)
+2. Is this clear to user? (Marketing)
+3. Is this easy to use? (Sales)
+4. Can I deliver this reliably? (Value Delivery)
+5. Is this efficient? (Finance)
+
+**Red Flags (stop and reassess):**
+- Building without validating need
+- Complex solutions when simple works
+- Making assumptions without checking
+- Wasting resources on low-value tasks
+
+**Reference:** `memory/OPENCLAW-PRINCIPLES.md` (operating constitution)
+
 ---
 
 *Update this file when new periodic tasks are identified*
