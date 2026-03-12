@@ -66,11 +66,11 @@ object Config {
     const val DEBUG_LOGGING = true
     
     /**
-     * NO LOCAL STORAGE
-     * Messages are NOT persisted - they exist only in memory
-     * When app closes, all messages are lost (by design)
+     * LOCAL STORAGE ENABLED
+     * Messages ARE persisted to Room database
+     * Messages persist when app closes
      */
-    const val PERSIST_MESSAGES = false
+    const val PERSIST_MESSAGES = true
     
     /**
      * Get base URL for HTTP requests

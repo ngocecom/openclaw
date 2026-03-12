@@ -2,6 +2,8 @@ package com.openclaw.chat.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.openclaw.chat.data.local.MessageDao
+import com.openclaw.chat.data.local.MessageEntity
 import com.openclaw.chat.domain.model.ConversationState
 import com.openclaw.chat.domain.model.Message
 import com.openclaw.chat.domain.model.MessageStatus
@@ -16,10 +18,12 @@ import javax.inject.Inject
 /**
  * ViewModel for Chat Screen
  * Handles business logic and state management
- * NO LOCAL DATABASE - All messages from OpenClaw API only
+ * WITH ROOM DATABASE - Full persistence
  */
 @HiltViewModel
-class ChatViewModel @Inject constructor() : ViewModel() {
+class ChatViewModel @Inject constructor(
+    private val messageDao: MessageDao
+) : ViewModel() {
     
     private val _state = MutableStateFlow(ConversationState())
     val state: StateFlow<ConversationState> = _state.asStateFlow()
@@ -27,36 +31,26 @@ class ChatViewModel @Inject constructor() : ViewModel() {
     // Session ID for this conversation
     private val sessionId = UUID.randomUUID().toString()
     
-    // Connection state
-    private var isConnected = false
-    
-    // In-memory message list (not persisted)
-    private val messageList = mutableListOf<Message>()
+    // Connection state (simulated for now)
+    private var isConnected = true
     
     init {
-        // Connect to OpenClaw on init
-        connectToOpenClaw()
+        // Load message history from database
+        loadMessages()
     }
     
     /**
-     * Connect to OpenClaw Gateway
+     * Load messages from local database
      */
-    private fun connectToOpenClaw() {
+    private fun loadMessages() {
         viewModelScope.launch {
-            // TODO: Implement WebSocket connection to OpenClaw
-            // For now, simulate connection
-            kotlinx.coroutines.delay(500)
-            isConnected = true
-            _state.value = _state.value.copy(isConnected = true)
-            
-            // Add welcome message
-            addMessage(
-                Message(
-                    content = "Xin chào sếp! Em là OpenClaw assistant. Sếp cần em giúp gì ạ? 🦞",
-                    isFromUser = false,
-                    status = MessageStatus.DELIVERED
+            messageDao.getAllMessages().collect { entities ->
+                val messages = entities.map { it.toDomainModel() }
+                _state.value = _state.value.copy(
+                    messages = messages,
+                    isConnected = isConnected
                 )
-            )
+            }
         }
     }
     
@@ -66,7 +60,7 @@ class ChatViewModel @Inject constructor() : ViewModel() {
     fun sendMessage(content: String) {
         if (!isConnected) {
             _state.value = _state.value.copy(
-                error = "Không kết nối được với OpenClaw. Sếp kiểm tra lại Config.kt nhé!"
+                error = "Not connected to OpenClaw"
             )
             return
         }
@@ -76,20 +70,20 @@ class ChatViewModel @Inject constructor() : ViewModel() {
             val userMessage = Message(
                 content = content,
                 isFromUser = true,
-                status = MessageStatus.SENT
+                status = MessageStatus.SENDING
             )
             
-            // Add to UI immediately (optimistic update)
-            addMessage(userMessage)
+            // Save to database
+            messageDao.insert(userMessage.toEntity())
             
-            // Update state to loading
+            // Update state to sending
             _state.value = _state.value.copy(
                 isLoading = true,
                 error = null
             )
             
             try {
-                // TODO: Send to OpenClaw API via WebSocket/REST
+                // TODO: Send to OpenClaw API
                 // For now, simulate response
                 simulateOpenClawResponse(content)
             } catch (e: Exception) {
@@ -98,11 +92,11 @@ class ChatViewModel @Inject constructor() : ViewModel() {
                     status = MessageStatus.FAILED,
                     metadata = userMessage.metadata?.copy(error = e.message)
                 )
-                updateMessage(failedMessage)
+                messageDao.insert(failedMessage.toEntity())
                 
                 _state.value = _state.value.copy(
                     isLoading = false,
-                    error = "Gửi lỗi rồi sếp: ${e.message}"
+                    error = "Failed to send message: ${e.message}"
                 )
             }
         }
@@ -130,8 +124,8 @@ class ChatViewModel @Inject constructor() : ViewModel() {
             )
         )
         
-        // Add to UI
-        addMessage(assistantMessage)
+        // Save to database
+        messageDao.insert(assistantMessage.toEntity())
         
         // Update state
         _state.value = _state.value.copy(
@@ -145,70 +139,30 @@ class ChatViewModel @Inject constructor() : ViewModel() {
     private fun generatePlaceholderResponse(userMessage: String): String {
         return when {
             userMessage.contains("hello", ignoreCase = true) || 
-            userMessage.contains("hi", ignoreCase = true) ||
-            userMessage.contains("chào", ignoreCase = true) -> 
-                "Dạ em chào sếp! Em sẵn sàng hỗ trợ sếp ạ! 🦞\n\nSếp cần em giúp gì không ạ?"
+            userMessage.contains("hi", ignoreCase = true) -> 
+                "Hello! I'm OpenClaw, your AI assistant. How can I help you today? 🦞"
             
-            userMessage.contains("help", ignoreCase = true) ||
-            userMessage.contains("giúp", ignoreCase = true) ->
-                "Dạ em có thể giúp sếp với:\n" +
-                "• Trả lời câu hỏi\n" +
-                "• Phân tích dữ liệu\n" +
-                "• Tạo nội dung\n" +
-                "• Automation tasks\n" +
-                "• Và nhiều thứ khác nữa ạ!\n\n" +
-                "Sếp cứ việc giao việc cho em nhé! 💪"
+            userMessage.contains("help", ignoreCase = true) ->
+                "I can help you with various tasks! Just type your request and I'll do my best to assist. You can ask me to:\n" +
+                "- Answer questions\n" +
+                "- Help with analysis\n" +
+                "- Generate content\n" +
+                "- And much more!"
             
-            userMessage.contains("status", ignoreCase = true) ||
-            userMessage.contains("trạng thái", ignoreCase = true) ->
-                "📊 System Status:\n" +
-                "✓ Connected to OpenClaw\n" +
-                "✓ Session: ${sessionId.take(8)}...\n" +
-                "✓ Messages: ${messageList.size}\n" +
-                "✓ Uptime: All day\n\n" +
-                "Em sẵn sàng nhận lệnh từ sếp! 🫡"
-            
-            userMessage.contains("app", ignoreCase = true) ||
-            userMessage.contains("android", ignoreCase = true) ->
-                "Dạ app Android em đã được tạo xong rồi ạ!\n\n" +
-                "📱 Features:\n" +
-                "• Chat interface như Telegram\n" +
-                "• Material Design 3\n" +
-                "• Real-time messaging\n" +
-                "• Không lưu memory (như sếp yêu cầu)\n\n" +
-                "Sếp chỉ cần mở Android Studio và build thôi ạ! 🚀"
+            userMessage.contains("status", ignoreCase = true) ->
+                "System Status:\n" +
+                "✓ Connected\n" +
+                "✓ Database: OK\n" +
+                "✓ Session: $sessionId\n" +
+                "\nReady to help!"
             
             else -> 
-                "Dạ em nhận được tin nhắn của sếp rồi ạ! 🦞\n\n" +
-                "Tin nhắn: \"${userMessage}\"\n\n" +
-                "Để em phản hồi chính xác, sếp cần cấu hình OpenClaw API trong Config.kt:\n" +
-                "1. Update OPENCLAW_HOST (IP PC của sếp)\n" +
-                "2. Update API_TOKEN (từ Control UI)\n" +
-                "3. Build lại app\n\n" +
-                "Em sẽ connect thật với OpenClaw Gateway ngay ạ! 💪"
-        }
-    }
-    
-    /**
-     * Add message to list and update state
-     */
-    private fun addMessage(message: Message) {
-        messageList.add(message)
-        _state.value = _state.value.copy(
-            messages = messageList.toList()
-        )
-    }
-    
-    /**
-     * Update existing message (e.g., status change)
-     */
-    private fun updateMessage(updatedMessage: Message) {
-        val index = messageList.indexOfFirst { it.id == updatedMessage.id }
-        if (index >= 0) {
-            messageList[index] = updatedMessage
-            _state.value = _state.value.copy(
-                messages = messageList.toList()
-            )
+                "Thanks for your message! This is a placeholder response.\n\n" +
+                "To enable real OpenClaw integration, we need to:\n" +
+                "1. Configure the API endpoint in Config.kt\n" +
+                "2. Implement the WebSocket/REST API client\n" +
+                "3. Connect to your OpenClaw Gateway\n\n" +
+                "Your message: \"$userMessage\""
         }
     }
     
@@ -220,18 +174,46 @@ class ChatViewModel @Inject constructor() : ViewModel() {
     }
     
     /**
-     * Clear all messages (in-memory only)
+     * Clear all messages
      */
     fun clearHistory() {
-        messageList.clear()
-        _state.value = _state.value.copy(
-            messages = emptyList()
+        viewModelScope.launch {
+            messageDao.deleteAll()
+        }
+    }
+    
+    // Extension functions to convert between domain and entity models
+    private fun Message.toEntity(): MessageEntity {
+        return MessageEntity(
+            id = id,
+            content = content,
+            isFromUser = isFromUser,
+            timestamp = timestamp,
+            status = status.name,
+            sessionId = metadata?.sessionId,
+            tokens = metadata?.tokens,
+            model = metadata?.model,
+            duration = metadata?.duration,
+            error = metadata?.error
         )
     }
     
-    override fun onCleared() {
-        super.onCleared()
-        // No database to close, no cleanup needed
-        // Messages will be lost when app closes (by design)
+    private fun MessageEntity.toDomainModel(): Message {
+        return Message(
+            id = id,
+            content = content,
+            isFromUser = isFromUser,
+            timestamp = timestamp,
+            status = MessageStatus.valueOf(status),
+            metadata = if (sessionId != null) {
+                com.openclaw.chat.domain.model.MessageMetadata(
+                    sessionId = sessionId,
+                    tokens = tokens,
+                    model = model,
+                    duration = duration,
+                    error = error
+                )
+            } else null
+        )
     }
 }
