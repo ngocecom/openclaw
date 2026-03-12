@@ -2,6 +2,9 @@
 
 **Purpose:** Tasks to check/run automatically every 30 minutes
 
+**Auto-Approval:** ENABLED (user approved 2026-03-12)
+**Daily Report Time:** 10:00 AM Vietnam Time (GMT+7)
+
 ---
 
 ## 🔄 PERIODIC CHECKS
@@ -16,19 +19,23 @@
 - [ ] Monitor gateway status
 - [ ] Review browser tabs (if any open)
 - [ ] Check for urgent news (Iran-US conflict)
+- [ ] Auto-commit changes if files modified (APPROVED)
 
-### Daily (End of Day)
+### Daily (10:00 AM Vietnam Time - Report)
+- [ ] Generate daily report summary
+- [ ] Send report via Telegram at 10:00 AM
 - [ ] Update daily log (memory/YYYY-MM-DD.md)
-- [ ] Summarize key accomplishments
+- [ ] Auto-commit changes (APPROVED - no need to ask)
 - [ ] Note pending tasks for tomorrow
 - [ ] Check project progress
 
-### Weekly (Every 7 Days)
+### Weekly (Every 7 Days - Sunday 20:00)
 - [ ] Security audit (`openclaw security audit`)
 - [ ] Review and consolidate MEMORY.md
 - [ ] Update work-projects.md status
 - [ ] Clean up old files
 - [ ] Check for OpenClaw updates
+- [ ] Auto-commit weekly summary (APPROVED)
 
 ---
 
