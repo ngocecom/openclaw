@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Google OAuth Authorization - Vincustom Upload</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .button { background: #4285f4; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-size: 16px; display: inline-block; margin: 20px 0; }
+        .button:hover { background: #357ae8; }
+        .steps { background: #f5f5f5; padding: 20px; border-radius: 5px; margin: 20px 0; }
+        .code { background: #e8e8e8; padding: 10px; font-family: monospace; word-break: break-all; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔐 Google OAuth Authorization</h1>
+    <h2>Vincustom Products Upload</h2>
+    
+    <div class="steps">
+        <h3>Hướng dẫn (3 bước):</h3>
+        <ol>
+            <li>Click nút "Authorize with Google" bên dưới</li>
+            <li>Login với: <strong>fachuhomes@gmail.com</strong></li>
+            <li>Click "Allow" hoặc "Cho phép"</li>
+            <li>Copy authorization code từ browser</li>
+            <li>Chạy script và paste code vào</li>
+        </ol>
+    </div>
+    
+    <a href="https://accounts.google.com/o/oauth2/auth?client_id=465385173022-qi5dopqpe95l1lev3l4k5pe62vq0nio8.apps.googleusercontent.com&redirect_uri=urn:ietf:wg:oauth:2.0:oob&response_type=code&scope=https://www.googleapis.com/auth/spreadsheets%20https://www.googleapis.com/auth/drive&access_type=offline&prompt=consent" 
+       class="button" 
+       target="_blank">
+        🔑 Authorize with Google
+    </a>
+    
+    <div class="steps">
+        <h3>Sau khi authorize:</h3>
+        <ol>
+            <li>Mở PowerShell</li>
+            <li>Chạy lệnh:
+                <div class="code">cd C:\Users\mayao2\.openclaw\workspace\07-REFERENCES\tools\google-credentials<br>python generate-auth-url.py</div>
+            </li>
+            <li>Paste authorization code khi được hỏi</li>
+            <li>Chạy tiếp: <div class="code">python upload-vincustom.py</div></li>
+        </ol>
+    </div>
+    
+    <p><strong>Google Sheet sẽ được tạo tự động với 11 products!</strong></p>
+</body>
+</html>

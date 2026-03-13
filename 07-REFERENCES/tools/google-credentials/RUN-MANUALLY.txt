@@ -1,0 +1,46 @@
+================================================================================
+GOOGLE OAUTH - MANUAL CODE PASTE
+================================================================================
+
+STEP 1: CHAY LENH NAY
+----------------------
+cd C:\Users\mayao2\.openclaw\workspace\07-REFERENCES\tools\google-credentials
+python oauth-manual.py
+
+================================================================================
+
+STEP 2: COPY URL TU MAN HINH VA MO TRONG BROWSER
+-------------------------------------------------
+URL se hien tren man hinh. Copy va paste vao Chrome/Edge.
+
+Hoac click vao link neu terminal ho tro.
+
+================================================================================
+
+STEP 3: AUTHORIZE
+-----------------
+1. Login voi: fachuhomes@gmail.com
+2. Click "Advanced" neu thay canh bao
+3. Click "Go to OpenClaw Automation (unsafe)"
+4. Click "Allow"
+5. COPY authorization code (chuoi dai)
+
+================================================================================
+
+STEP 4: PASTE CODE VA TERMINAL
+-------------------------------
+Quay lai terminal va paste code vao.
+
+Neu thanh cong, se thay:
+  SUCCESS! Token saved to token.json
+  Drive API works! Found X files
+
+================================================================================
+
+STEP 5: UPLOAD VINCUSTOM DATA
+------------------------------
+python upload-vincustom.py
+
+Google Sheet se duoc tao voi 11 products!
+
+================================================================================

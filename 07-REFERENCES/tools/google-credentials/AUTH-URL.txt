@@ -1,0 +1,32 @@
+================================================================================
+MANUAL OAUTH AUTHORIZATION - VINCUSTOM UPLOAD
+================================================================================
+
+STEP 1: COPY URL BELOW VÀO BROWSER
+================================================================================
+
+https://accounts.google.com/o/oauth2/auth?client_id=465385173022-qi5dopqpe95l1lev3l4k5pe62vq0nio8.apps.googleusercontent.com&redirect_uri=urn:ietf:wg:oauth:2.0:oob&response_type=code&scope=https://www.googleapis.com/auth/spreadsheets%20https://www.googleapis.com/auth/drive&access_type=offline&prompt=consent
+
+================================================================================
+STEP 2: LOGIN VA AUTHORIZE
+================================================================================
+
+1. Paste URL tren vao browser (Chrome/Edge)
+2. Login voi: fachuhomes@gmail.com
+3. Click "Allow" hoac "Cho phep"
+4. Copy authorization code tu browser
+
+================================================================================
+STEP 3: PASTE CODE VA TERMINAL
+================================================================================
+
+Chay lenh:
+cd C:\Users\mayao2\.openclaw\workspace\07-REFERENCES\tools\google-credentials
+python generate-auth-url.py
+
+Paste code khi duoc hoi.
+
+Sau do chay:
+python upload-vincustom.py
+
+================================================================================
