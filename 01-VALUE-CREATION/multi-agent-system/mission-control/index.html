@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mission Control - OpenClaw Multi-Agent System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+    <style>
+        :root {
+            --primary: #4A90E2;
+            --secondary: #7B68EE;
+            --success: #50C878;
+            --warning: #FFD700;
+            --error: #FF6B6B;
+            --idle: #B0B0B0;
+            --bg-dark: #1a1a2e;
+            --bg-card: #16213e;
+            --text-light: #eaeaea;
+            --text-muted: #a0a0a0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-card);
+            padding: 1rem 2rem;
+            border-bottom: 2px solid var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--success);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            background: var(--bg-card);
+            padding: 0 2rem;
+            border-bottom: 1px solid #333;
+        }
+
+        .nav-tab {
+            padding: 1rem 2rem;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .nav-tab:hover {
+            color: var(--text-light);
+        }
+
+        .nav-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        /* Team Screen */
+        .org-chart {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .agent-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            min-width: 280px;
+            max-width: 320px;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .agent-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .agent-card.henry {
+            border-color: var(--primary);
+            min-width: 400px;
+        }
+
+        .agent-card.researcher { border-color: #FF6B6B; }
+        .agent-card.analyst { border-color: #7B68EE; }
+        .agent-card.assistant { border-color: #50C878; }
+        .agent-card.writer { border-color: #FFD700; }
+        .agent-card.engineer { border-color: #4A90E2; }
+
+        .agent-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .agent-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .agent-info h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .agent-role {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .status-badge.online { background: rgba(80,200,120,0.2); color: var(--success); }
+        .status-badge.busy { background: rgba(255,215,0,0.2); color: var(--warning); }
+        .status-badge.idle { background: rgba(176,176,176,0.2); color: var(--idle); }
+        .status-badge.offline { background: rgba(255,107,107,0.2); color: var(--error); }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .agent-details {
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+        }
+
+        .detail-label {
+            color: var(--text-muted);
+        }
+
+        .detail-value {
+            font-weight: 500;
+        }
+
+        .progress-bar {
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            height: 8px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 4px;
+            transition: width 0.5s;
+        }
+
+        /* Metrics Grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .metric-card {
+            background: var(--bg-card);
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        /* Calendar View */
+        #calendar {
+            background: var(--bg-card);
+            padding: 2rem;
+            border-radius: 12px;
+        }
+
+        .fc-theme-standard .fc-scrollgrid {
+            border-color: #333;
+        }
+
+        .fc-col-header-cell {
+            background: rgba(255,255,255,0.05);
+            padding: 1rem;
+        }
+
+        .fc-daygrid-day {
+            background: rgba(255,255,255,0.02);
+        }
+
+        .fc-event {
+            border: none;
+            padding: 0.5rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+        }
+
+        .fc-event-researcher { background: rgba(255,107,107,0.8); }
+        .fc-event-analyst { background: rgba(123,104,238,0.8); }
+        .fc-event-assistant { background: rgba(80,200,120,0.8); }
+        .fc-event-writer { background: rgba(255,215,0,0.8); }
+        .fc-event-engineer { background: rgba(74,144,226,0.8); }
+
+        /* Office View */
+        .office-container {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .office-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, 200px);
+            gap: 1.5rem;
+        }
+
+        .office-room {
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 1rem;
+            position: relative;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .office-room:hover {
+            border-color: var(--primary);
+            background: rgba(255,255,255,0.08);
+        }
+
+        .room-name {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .room-agent {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+            font-size: 3rem;
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .office-controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #3a7bc8;
+            transform: translateY(-2px);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--bg-card);
+            padding: 1rem 2rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-top: 2rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .nav-tabs {
+                overflow-x: auto;
+            }
+
+            .office-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .agent-card.henry {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <h1>🎮 Mission Control</h1>
+        <div class="header-stats">
+            <div class="stat">
+                <div class="stat-value">5/6</div>
+                <div class="stat-label">Agents Active</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">47</div>
+                <div class="stat-label">Tasks Today</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">$0.87</div>
+                <div class="stat-label">Cost Today</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="nav-tabs">
+        <button class="nav-tab active" onclick="switchTab('team')">👥 Team Screen</button>
+        <button class="nav-tab" onclick="switchTab('calendar')">📅 Calendar View</button>
+        <button class="nav-tab" onclick="switchTab('office')">🏢 Office View</button>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Team Screen -->
+        <div id="team-screen" class="screen active">
+            <!-- Org Chart -->
+            <div class="org-chart">
+                <!-- Henry -->
+                <div class="agent-card henry">
+                    <div class="agent-header">
+                        <div class="agent-avatar">🤖</div>
+                        <div class="agent-info">
+                            <h3>Henry</h3>
+                            <div class="agent-role">Master Orchestrator</div>
+                        </div>
+                    </div>
+                    <div class="status-badge online">
+                        <span class="status-dot"></span>
+                        Online
+                    </div>
+                    <div class="agent-details">
+                        <div class="detail-row">
+                            <span class="detail-label">Model:</span>
+                            <span class="detail-value">Qwen 3.5 Plus</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Task:</span>
+                            <span class="detail-value">Monitoring subagents</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Progress:</span>
+                            <span class="detail-value">75%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 75%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Subagents -->
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">
+                    <!-- Researcher -->
+                    <div class="agent-card researcher">
+                        <div class="agent-header">
+                            <div class="agent-avatar">📰</div>
+                            <div class="agent-info">
+                                <h3>Researcher</h3>
+                                <div class="agent-role">Information Gathering</div>
+                            </div>
+                        </div>
+                        <div class="status-badge busy">
+                            <span class="status-dot"></span>
+                            Busy
+                        </div>
+                        <div class="agent-details">
+                            <div class="detail-row">
+                                <span class="detail-label">Model:</span>
+                                <span class="detail-value">Qwen 2.5 72B</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Task:</span>
+                                <span class="detail-value">Daily news digest</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Progress:</span>
+                                <span class="detail-value">60%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 60%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Analyst -->
+                    <div class="agent-card analyst">
+                        <div class="agent-header">
+                            <div class="agent-avatar">📊</div>
+                            <div class="agent-info">
+                                <h3>Analyst</h3>
+                                <div class="agent-role">Data Analysis</div>
+                            </div>
+                        </div>
+                        <div class="status-badge idle">
+                            <span class="status-dot"></span>
+                            Idle
+                        </div>
+                        <div class="agent-details">
+                            <div class="detail-row">
+                                <span class="detail-label">Model:</span>
+                                <span class="detail-value">Claude 3.5 Sonnet</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Task:</span>
+                                <span class="detail-value">Waiting for tasks</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Progress:</span>
+                                <span class="detail-value">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Assistant -->
+                    <div class="agent-card assistant">
+                        <div class="agent-header">
+                            <div class="agent-avatar">🤝</div>
+                            <div class="agent-info">
+                                <h3>Assistant</h3>
+                                <div class="agent-role">Daily Tasks</div>
+                            </div>
+                        </div>
+                        <div class="status-badge online">
+                            <span class="status-dot"></span>
+                            Online
+                        </div>
+                        <div class="agent-details">
+                            <div class="detail-row">
+                                <span class="detail-label">Model:</span>
+                                <span class="detail-value">Qwen 3.5 Plus</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Task:</span>
+                                <span class="detail-value">Telegram responses</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Progress:</span>
+                                <span class="detail-value">90%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 90%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Writer -->
+                    <div class="agent-card writer">
+                        <div class="agent-header">
+                            <div class="agent-avatar">📝</div>
+                            <div class="agent-info">
+                                <h3>Writer</h3>
+                                <div class="agent-role">Content Creation</div>
+                            </div>
+                        </div>
+                        <div class="status-badge idle">
+                            <span class="status-dot"></span>
+                            Idle
+                        </div>
+                        <div class="agent-details">
+                            <div class="detail-row">
+                                <span class="detail-label">Model:</span>
+                                <span class="detail-value">GPT-4 Turbo</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Task:</span>
+                                <span class="detail-value">Waiting for tasks</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Progress:</span>
+                                <span class="detail-value">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Engineer -->
+                    <div class="agent-card engineer">
+                        <div class="agent-header">
+                            <div class="agent-avatar">🔧</div>
+                            <div class="agent-info">
+                                <h3>Engineer</h3>
+                                <div class="agent-role">Code & Automation</div>
+                            </div>
+                        </div>
+                        <div class="status-badge online">
+                            <span class="status-dot"></span>
+                            Online
+                        </div>
+                        <div class="agent-details">
+                            <div class="detail-row">
+                                <span class="detail-label">Model:</span>
+                                <span class="detail-value">Qwen 2.5 72B</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Task:</span>
+                                <span class="detail-value">Dashboard development</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Progress:</span>
+                                <span class="detail-value">45%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 45%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Metrics -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">47</div>
+                    <div class="metric-label">Tasks Completed Today</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">23s</div>
+                    <div class="metric-label">Avg Response Time</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">125K</div>
+                    <div class="metric-label">Tokens Used</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">$0.87</div>
+                    <div class="metric-label">Cost Today</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">98.5%</div>
+                    <div class="metric-label">Success Rate</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">5/6</div>
+                    <div class="metric-label">Active Agents</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendar View -->
+        <div id="calendar-screen" class="screen">
+            <div id="calendar"></div>
+        </div>
+
+        <!-- Office View -->
+        <div id="office-screen" class="screen">
+            <div class="office-container">
+                <div class="office-grid">
+                    <div class="office-room">
+                        <div class="room-name">RESEARCH LAB</div>
+                        <div class="room-agent">📰</div>
+                    </div>
+                    <div class="office-room">
+                        <div class="room-name">ANALYST OFFICE</div>
+                        <div class="room-agent">📊</div>
+                    </div>
+                    <div class="office-room">
+                        <div class="room-name">MEETING ROOM</div>
+                    </div>
+                    <div class="office-room">
+                        <div class="room-name">ASSISTANT DESK</div>
+                        <div class="room-agent">🤝</div>
+                    </div>
+                    <div class="office-room">
+                        <div class="room-name">WRITER CORNER</div>
+                    </div>
+                    <div class="office-room">
+                        <div class="room-name">ENGINEER LAB</div>
+                        <div class="room-agent">🔧</div>
+                    </div>
+                </div>
+                <div class="office-controls">
+                    <button class="btn btn-primary" onclick="alert('Click on an agent to chat!')">💬 Chat with Agent</button>
+                    <button class="btn btn-primary" onclick="alert('Drag task to assign!')">📋 Assign Task</button>
+                    <button class="btn btn-primary" onclick="alert('Office view is interactive!')">🎮 Toggle Animation</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>Mission Control v1.0.0 | OpenClaw Multi-Agent System | Last updated: <span id="last-update">Just now</span></p>
+    </footer>
+
+    <script>
+        // Tab Switching
+        function switchTab(tabName) {
+            // Update nav tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Update screens
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(`${tabName}-screen`).classList.add('active');
+
+            // Initialize calendar if switching to calendar tab
+            if (tabName === 'calendar') {
+                initCalendar();
+            }
+        }
+
+        // Initialize FullCalendar
+        let calendarInitialized = false;
+        function initCalendar() {
+            if (calendarInitialized) return;
+            
+            const calendarEl = document.getElementById('calendar');
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                events: [
+                    {
+                        title: '📰 Daily News Digest',
+                        start: new Date().toISOString().split('T')[0] + 'T08:00:00',
+                        className: 'fc-event-researcher',
+                        extendedProps: { agent: 'Researcher' }
+                    },
+                    {
+                        title: '🤝 Daily Report',
+                        start: new Date().toISOString().split('T')[0] + 'T10:00:00',
+                        className: 'fc-event-assistant',
+                        extendedProps: { agent: 'Assistant' }
+                    },
+                    {
+                        title: '🔧 System Health Check',
+                        start: new Date().toISOString().split('T')[0] + 'T06:00:00',
+                        className: 'fc-event-engineer',
+                        extendedProps: { agent: 'Engineer' }
+                    },
+                    {
+                        title: '📊 Weekly Review',
+                        start: '2026-03-15T20:00:00',
+                        className: 'fc-event-analyst',
+                        extendedProps: { agent: 'Analyst' }
+                    }
+                ],
+                eventClick: function(info) {
+                    alert(`Task: ${info.event.title}\nAgent: ${info.event.extendedProps.agent}`);
+                }
+            });
+            calendar.render();
+            calendarInitialized = true;
+        }
+
+        // Update last update time
+        setInterval(() => {
+            document.getElementById('last-update').textContent = new Date().toLocaleString();
+        }, 60000);
+
+        // Simulate real-time updates
+        setInterval(() => {
+            const progressBars = document.querySelectorAll('.progress-fill');
+            progressBars.forEach(bar => {
+                const currentWidth = parseFloat(bar.style.width);
+                const newWidth = Math.min(100, currentWidth + Math.random() * 5);
+                bar.style.width = newWidth + '%';
+            });
+        }, 5000);
+    </script>
+</body>
+</html>
