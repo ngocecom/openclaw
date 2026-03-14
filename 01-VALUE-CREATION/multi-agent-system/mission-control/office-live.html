@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏢 OpenClaw Office - Live Team View</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --floor: #1e293b; --wall: #475569; --desk: #6366f1;
+            --value-creation: #10b981; --marketing: #f59e0b; --sales: #ef4444;
+            --delivery: #3b82f6; --finance: #8b5cf6;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #0f172a; color: white; overflow: hidden; }
+        .header { background: rgba(30,41,59,0.95); padding: 1rem 2rem; border-bottom: 2px solid #6366f1; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-family: 'Press Start 2P'; font-size: 1.2rem; color: #6366f1; }
+        .stats { display: flex; gap: 2rem; }
+        .stat { text-align: center; }
+        .stat-value { font-size: 1.5rem; font-weight: bold; color: #10b981; }
+        .stat-label { font-size: 0.75rem; color: #94a3b8; }
+        .office { position: relative; width: 100vw; height: calc(100vh - 80px); background: var(--floor); }
+        .grid { position: absolute; width: 100%; height: 100%; background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 40px 40px; }
+        .zone { position: absolute; border: 3px solid; border-radius: 12px; padding: 0.5rem; background: rgba(0,0,0,0.2); }
+        .zone-label { position: absolute; top: -14px; left: 1rem; background: inherit; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.7rem; font-weight: 700; }
+        .zone-1 { border-color: var(--value-creation); }
+        .zone-2 { border-color: var(--marketing); }
+        .zone-3 { border-color: var(--sales); }
+        .zone-4 { border-color: var(--delivery); }
+        .zone-5 { border-color: var(--finance); }
+        .desk { position: absolute; background: linear-gradient(135deg, var(--desk), #8b5cf6); border-radius: 8px; box-shadow: 0 4px 15px rgba(99,102,241,0.4); }
+        .desk-label { position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%); font-size: 0.65rem; color: #94a3b8; white-space: nowrap; }
+        .desk-status { position: absolute; top: -8px; right: -8px; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; }
+        .desk-status.active { background: #10b981; }
+        .desk-status.busy { background: #f59e0b; }
+        .desk-status.idle { background: #64748b; }
+        .agent { position: absolute; width: 56px; height: 56px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1.8rem; cursor: pointer; transition: all 0.4s ease; z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+        .agent:hover { transform: scale(1.25); z-index: 1000; }
+        .agent.henry { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+        .agent.researcher { background: linear-gradient(135deg, #10b981, #34d399); }
+        .agent.analyst { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+        .agent.assistant { background: linear-gradient(135deg, #3b82f6, #60a5fa); }
+        .agent.writer { background: linear-gradient(135deg, #ef4444, #f87171); }
+        .agent.engineer { background: linear-gradient(135deg, #8b5cf6, #a78bfa); }
+        .agent-name { font-size: 0.6rem; font-weight: 600; margin-top: 2px; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+        .agent-status { position: absolute; bottom: -6px; right: -6px; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; }
+        .agent-status.online { background: #10b981; }
+        .agent-status.busy { background: #f59e0b; }
+        .agent-status.break { background: #3b82f6; }
+        .agent.walking { animation: walk 0.4s infinite; }
+        @keyframes walk { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        .thought { position: absolute; top: -35px; background: white; color: black; padding: 0.4rem 0.6rem; border-radius: 10px; font-size: 0.6rem; white-space: nowrap; opacity: 0; transition: all 0.3s; pointer-events: none; }
+        .agent:hover .thought { opacity: 1; transform: translateY(-5px); }
+        .furniture { position: absolute; opacity: 0.8; }
+        .plant { font-size: 1.5rem; }
+        .coffee { font-size: 2rem; animation: steam 2s infinite; }
+        @keyframes steam { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        .controls { position: absolute; bottom: 1.5rem; right: 1.5rem; background: rgba(30,41,59,0.95); padding: 1rem; border-radius: 12px; border: 1px solid #475569; z-index: 2000; }
+        .controls h3 { font-size: 0.8rem; margin-bottom: 0.75rem; color: #6366f1; }
+        .btn { display: block; width: 100%; padding: 0.5rem 0.75rem; margin-bottom: 0.5rem; background: #334155; border: 1px solid #475569; border-radius: 6px; color: white; cursor: pointer; font-size: 0.7rem; transition: all 0.3s; }
+        .btn:hover { background: #6366f1; border-color: #6366f1; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 3000; }
+        .modal-overlay.active { display: block; }
+        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(30,41,59,0.98); padding: 2rem; border-radius: 16px; border: 2px solid #6366f1; z-index: 3500; min-width: 380px; }
+        .modal.active { display: block; animation: modalIn 0.3s; }
+        @keyframes modalIn { from { opacity: 0; transform: translate(-50%, -50%) scale(0.95); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+        .modal-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+        .modal-avatar { width: 56px; height: 56px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 2rem; }
+        .modal-close { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; }
+        .detail-row { display: flex; justify-content: space-between; padding: 0.5rem; background: rgba(255,255,255,0.05); border-radius: 6px; margin-bottom: 0.5rem; font-size: 0.85rem; }
+        .detail-label { color: #94a3b8; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>🏢 OpenClaw Office</h1>
+        <div class="stats">
+            <div class="stat"><div class="stat-value" id="activeCount">6/6</div><div class="stat-label">Active Agents</div></div>
+            <div class="stat"><div class="stat-value" id="taskCount">4</div><div class="stat-label">Tasks Active</div></div>
+            <div class="stat"><div class="stat-value" id="nextEvent">10:00 AM</div><div class="stat-label">Next Event</div></div>
+        </div>
+    </header>
+
+    <div class="office">
+        <div class="grid"></div>
+
+        <!-- Zone 1: VALUE CREATION -->
+        <div class="zone zone-1" style="top: 3%; left: 2%; width: 28%; height: 28%;">
+            <div class="zone-label" style="color: var(--value-creation);">01 - VALUE CREATION</div>
+            <div class="desk" style="top: 50%; left: 30%; width: 100px; height: 60px;">
+                <div class="desk-status active"></div>
+                <div class="desk-label">Research</div>
+            </div>
+        </div>
+
+        <!-- Zone 2: MARKETING -->
+        <div class="zone zone-2" style="top: 3%; left: 32%; width: 28%; height: 28%;">
+            <div class="zone-label" style="color: var(--marketing);">02 - MARKETING</div>
+            <div class="desk" style="top: 50%; left: 30%; width: 100px; height: 60px;">
+                <div class="desk-status busy"></div>
+                <div class="desk-label">Content</div>
+            </div>
+        </div>
+
+        <!-- Zone 3: SALES -->
+        <div class="zone zone-3" style="top: 3%; left: 62%; width: 28%; height: 28%;">
+            <div class="zone-label" style="color: var(--sales);">03 - SALES</div>
+            <div class="desk" style="top: 50%; left: 30%; width: 100px; height: 60px;">
+                <div class="desk-status idle"></div>
+                <div class="desk-label">Client</div>
+            </div>
+            <div class="furniture" style="top: 20%; left: 60%; font-size: 1.5rem;">📞</div>
+        </div>
+
+        <!-- Zone 4: VALUE DELIVERY -->
+        <div class="zone zone-4" style="top: 35%; left: 2%; width: 28%; height: 28%;">
+            <div class="zone-label" style="color: var(--delivery);">04 - VALUE DELIVERY</div>
+            <div class="desk" style="top: 50%; left: 30%; width: 100px; height: 60px;">
+                <div class="desk-status active"></div>
+                <div class="desk-label">Operations</div>
+            </div>
+        </div>
+
+        <!-- Zone 5: FINANCE -->
+        <div class="zone zone-5" style="top: 35%; left: 32%; width: 28%; height: 28%;">
+            <div class="zone-label" style="color: var(--finance);">05 - FINANCE</div>
+            <div class="desk" style="top: 50%; left: 30%; width: 100px; height: 60px;">
+                <div class="desk-status busy"></div>
+                <div class="desk-label">Analytics</div>
+            </div>
+        </div>
+
+        <!-- Meeting Room -->
+        <div class="zone" style="top: 35%; left: 62%; width: 28%; height: 28%; border-color: #64748b;">
+            <div class="zone-label" style="color: #94a3b8;">MEETING ROOM</div>
+            <div style="position: absolute; top: 40%; left: 25%; width: 50%; height: 40%; background: #475569; border-radius: 20px;"></div>
+        </div>
+
+        <!-- Break Area -->
+        <div class="zone" style="top: 67%; left: 2%; width: 28%; height: 28%; border-color: #3b82f6;">
+            <div class="zone-label" style="color: #3b82f6;">BREAK AREA</div>
+            <div class="furniture coffee" style="top: 40%; left: 40%;">☕</div>
+        </div>
+
+        <!-- Henry's Office -->
+        <div class="zone" style="top: 67%; left: 32%; width: 28%; height: 28%; border-color: #6366f1;">
+            <div class="zone-label" style="color: #6366f1;">MASTER ORCHESTRATOR</div>
+            <div class="desk" style="top: 50%; left: 35%; width: 120px; height: 70px;">
+                <div class="desk-status active"></div>
+                <div class="desk-label">Henry</div>
+            </div>
+        </div>
+
+        <!-- Engineering Lab -->
+        <div class="zone" style="top: 67%; left: 62%; width: 28%; height: 28%; border-color: #8b5cf6;">
+            <div class="zone-label" style="color: #8b5cf6;">ENGINEERING LAB</div>
+            <div class="desk" style="top: 50%; left: 30%; width: 100px; height: 60px;">
+                <div class="desk-status active"></div>
+                <div class="desk-label">Dev</div>
+            </div>
+        </div>
+
+        <!-- Plants -->
+        <div class="furniture plant" style="top: 2%; left: 2%;">🌿</div>
+        <div class="furniture plant" style="top: 2%; left: 96%;">🪴</div>
+        <div class="furniture plant" style="top: 96%; left: 2%;">🌱</div>
+        <div class="furniture plant" style="top: 96%; left: 96%;">🌵</div>
+
+        <!-- Agents -->
+        <div class="agent henry" data-agent="henry" style="top: 70%; left: 35%;">
+            <div>🤖</div><div class="agent-name">Henry</div>
+            <div class="agent-status online"></div>
+            <div class="thought">Monitoring team...</div>
+        </div>
+
+        <div class="agent researcher" data-agent="researcher" style="top: 6%; left: 5%;">
+            <div>📰</div><div class="agent-name">Research</div>
+            <div class="agent-status busy"></div>
+            <div class="thought">Researching...</div>
+        </div>
+
+        <div class="agent analyst" data-agent="analyst" style="top: 38%; left: 35%;">
+            <div>📊</div><div class="agent-name">Analyst</div>
+            <div class="agent-status busy"></div>
+            <div class="thought">Analyzing data...</div>
+        </div>
+
+        <div class="agent assistant" data-agent="assistant" style="top: 6%; left: 35%;">
+            <div>🤝</div><div class="agent-name">Assistant</div>
+            <div class="agent-status online"></div>
+            <div class="thought">Telegram responses...</div>
+        </div>
+
+        <div class="agent writer" data-agent="writer" style="top: 6%; left: 65%;">
+            <div>📝</div><div class="agent-name">Writer</div>
+            <div class="agent-status idle"></div>
+            <div class="thought">Ready to write...</div>
+        </div>
+
+        <div class="agent engineer" data-agent="engineer" style="top: 70%; left: 65%;">
+            <div>🔧</div><div class="agent-name">Engineer</div>
+            <div class="agent-status online"></div>
+            <div class="thought">Coding...</div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <h3>🎮 Controls</h3>
+            <button class="btn" onclick="toggleAnimation()">⏸️ Toggle Animation</button>
+            <button class="btn" onclick="coffeeBreak()">☕ Coffee Break</button>
+            <button class="btn" onclick="teamMeeting()">📋 Team Meeting</button>
+            <button class="btn" onclick="resetPositions()">🔄 Reset</button>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" onclick="closeModal()"></div>
+    <div class="modal">
+        <button class="modal-close" onclick="closeModal()">×</button>
+        <div class="modal-header">
+            <div class="modal-avatar" id="mAvatar">🤖</div>
+            <div>
+                <h3 id="mName" style="margin-bottom: 0.25rem;">Henry</h3>
+                <div id="mRole" style="color: #94a3b8; font-size: 0.85rem;">Master Orchestrator</div>
+            </div>
+        </div>
+        <div id="mDetails"></div>
+    </div>
+
+    <script>
+        const agents = {
+            henry: { name: 'Henry', role: 'Master Orchestrator', model: 'Qwen 3.5 Plus', zone: '05-FINANCE', task: 'Monitoring team', status: 'online' },
+            researcher: { name: 'Researcher', role: 'Information Gathering', model: 'Qwen 2.5 72B', zone: '01-VALUE CREATION', task: 'Daily news digest', status: 'busy' },
+            analyst: { name: 'Analyst', role: 'Data Analysis', model: 'Claude 3.5 Sonnet', zone: '05-FINANCE', task: 'Cost analysis', status: 'busy' },
+            assistant: { name: 'Assistant', role: 'Daily Tasks', model: 'Qwen 3.5 Plus', zone: '02-MARKETING', task: 'Telegram responses', status: 'online' },
+            writer: { name: 'Writer', role: 'Content Creation', model: 'GPT-4 Turbo', zone: '02-MARKETING', task: 'Documentation', status: 'idle' },
+            engineer: { name: 'Engineer', role: 'Code & Automation', model: 'Qwen 2.5 72B', zone: '04-VALUE DELIVERY', task: 'Dashboard dev', status: 'online' }
+        };
+
+        let animating = true;
+        let moveInterval;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.agent').forEach(el => {
+                el.addEventListener('click', () => openModal(el.dataset.agent));
+            });
+            startMovement();
+        });
+
+        function startMovement() {
+            moveInterval = setInterval(() => {
+                if (animating) moveRandomAgent();
+            }, 8000);
+        }
+
+        function moveRandomAgent() {
+            const keys = Object.keys(agents);
+            const key = keys[Math.floor(Math.random() * keys.length)];
+            const el = document.querySelector(`.agent[data-agent="${key}"]`);
+            el.classList.add('walking');
+            const top = parseFloat(el.style.top) + (Math.random() - 0.5) * 8;
+            const left = parseFloat(el.style.left) + (Math.random() - 0.5) * 8;
+            el.style.top = `${Math.max(5, Math.min(90, top))}%`;
+            el.style.left = `${Math.max(5, Math.min(90, left))}%`;
+            setTimeout(() => el.classList.remove('walking'), 1500);
+        }
+
+        function toggleAnimation() { animating = !animating; }
+
+        function coffeeBreak() {
+            Object.keys(agents).forEach((key, i) => {
+                setTimeout(() => {
+                    const el = document.querySelector(`.agent[data-agent="${key}"]`);
+                    el.style.top = '70%'; el.style.left = `${5 + i * 3}%`;
+                    el.querySelector('.agent-status').className = 'agent-status break';
+                    el.querySelector('.thought').textContent = '☕ Break!';
+                }, i * 300);
+            });
+            setTimeout(resetPositions, 6000);
+        }
+
+        function teamMeeting() {
+            const positions = [{t:40,l:65},{t:40,l:80},{t:55,l:65},{t:55,l:80},{t:47,l:65},{t:47,l:80}];
+            Object.keys(agents).forEach((key, i) => {
+                setTimeout(() => {
+                    const el = document.querySelector(`.agent[data-agent="${key}"]`);
+                    el.style.top = `${positions[i].t}%`; el.style.left = `${positions[i].l}%`;
+                    el.querySelector('.thought').textContent = '📋 Meeting...';
+                }, i * 300);
+            });
+        }
+
+        function resetPositions() {
+            const pos = { henry: [70,35], researcher: [6,5], analyst: [38,35], assistant: [6,35], writer: [6,65], engineer: [70,65] };
+            Object.keys(agents).forEach(key => {
+                const el = document.querySelector(`.agent[data-agent="${key}"]`);
+                el.style.top = `${pos[key][0]}%`; el.style.left = `${pos[key][1]}%`;
+                el.querySelector('.agent-status').className = `agent-status ${agents[key].status}`;
+                el.querySelector('.thought').textContent = agents[key].task;
+            });
+        }
+
+        function openModal(key) {
+            const a = agents[key];
+            document.getElementById('mAvatar').textContent = key === 'henry' ? '🤖' : key === 'researcher' ? '📰' : key === 'analyst' ? '📊' : key === 'assistant' ? '🤝' : key === 'writer' ? '📝' : '🔧';
+            document.getElementById('mAvatar').className = `modal-avatar ${key}`;
+            document.getElementById('mName').textContent = a.name;
+            document.getElementById('mRole').textContent = a.role;
+            document.getElementById('mDetails').innerHTML = `
+                <div class="detail-row"><span class="detail-label">Model:</span><span>${a.model}</span></div>
+                <div class="detail-row"><span class="detail-label">Zone:</span><span>${a.zone}</span></div>
+                <div class="detail-row"><span class="detail-label">Status:</span><span style="color:${a.status==='online'?'#10b981':a.status==='busy'?'#f59e0b':'#64748b'}">${a.status.toUpperCase()}</span></div>
+                <div class="detail-row"><span class="detail-label">Task:</span><span>${a.task}</span></div>
+            `;
+            document.querySelector('.modal-overlay').classList.add('active');
+            document.querySelector('.modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.querySelector('.modal-overlay').classList.remove('active');
+            document.querySelector('.modal').classList.remove('active');
+        }
+    </script>
+</body>
+</html>
