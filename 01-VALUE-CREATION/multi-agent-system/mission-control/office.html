@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏢 Office View - Mission Control</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --floor: #2d3748;
+            --wall: #4a5568;
+            --desk: #8b5cf6;
+            --desk-light: #a78bfa;
+            --chair: #4a5568;
+            --agent-henry: #6366f1;
+            --agent-researcher: #ef4444;
+            --agent-analyst: #8b5cf6;
+            --agent-assistant: #10b981;
+            --agent-writer: #f59e0b;
+            --agent-engineer: #3b82f6;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #1a202c;
+            color: white;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .office-header {
+            background: rgba(30,41,59,0.9);
+            padding: 1rem 2rem;
+            border-bottom: 2px solid #6366f1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .office-header h1 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1.25rem;
+            color: #6366f1;
+        }
+
+        .office-stats {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #10b981;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+
+        .office-container {
+            position: relative;
+            width: 100%;
+            height: calc(100vh - 80px);
+            background: var(--floor);
+            overflow: hidden;
+        }
+
+        /* Office Layout */
+        .office-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        /* Rooms/Zones */
+        .room {
+            position: absolute;
+            background: rgba(255,255,255,0.03);
+            border: 2px solid var(--wall);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .room-label {
+            position: absolute;
+            top: -12px;
+            left: 1rem;
+            background: var(--wall);
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #94a3b8;
+        }
+
+        /* Desks */
+        .desk {
+            position: absolute;
+            background: linear-gradient(135deg, var(--desk), var(--desk-light));
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(139,92,246,0.3);
+            transition: all 0.3s;
+        }
+
+        .desk:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 30px rgba(139,92,246,0.5);
+        }
+
+        .desk.computer {
+            background: linear-gradient(135deg, #4a5568, #718096);
+        }
+
+        .desk-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            color: #94a3b8;
+            white-space: nowrap;
+        }
+
+        .desk-status {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid white;
+            animation: pulse 2s infinite;
+        }
+
+        .desk-status.active { background: #10b981; }
+        .desk-status.busy { background: #f59e0b; }
+        .desk-status.idle { background: #94a3b8; }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+        }
+
+        /* Agents */
+        .agent {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: all 0.5s ease;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
+
+        .agent:hover {
+            transform: scale(1.2);
+            z-index: 100;
+        }
+
+        .agent.henry { background: linear-gradient(135deg, var(--agent-henry), #8b5cf6); }
+        .agent.researcher { background: linear-gradient(135deg, var(--agent-researcher), #fca5a5); }
+        .agent.analyst { background: linear-gradient(135deg, var(--agent-analyst), #c4b5fd); }
+        .agent.assistant { background: linear-gradient(135deg, var(--agent-assistant), #6ee7b7); }
+        .agent.writer { background: linear-gradient(135deg, var(--agent-writer), #fcd34d); }
+        .agent.engineer { background: linear-gradient(135deg, var(--agent-engineer), #93c5fd); }
+
+        .agent-avatar {
+            font-size: 2rem;
+        }
+
+        .agent-name {
+            font-size: 0.625rem;
+            font-weight: 600;
+            margin-top: 0.25rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .agent-status {
+            position: absolute;
+            bottom: -8px;
+            right: -8px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        .agent-status.online { background: #10b981; }
+        .agent-status.busy { background: #f59e0b; }
+        .agent-status.break { background: #3b82f6; }
+
+        /* Walking Animation */
+        @keyframes walk {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-5px) rotate(5deg); }
+            75% { transform: translateY(-5px) rotate(-5deg); }
+        }
+
+        .agent.walking {
+            animation: walk 0.5s infinite;
+        }
+
+        /* Thought Bubble */
+        .thought-bubble {
+            position: absolute;
+            top: -40px;
+            background: white;
+            color: black;
+            padding: 0.5rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.625rem;
+            white-space: nowrap;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s;
+            pointer-events: none;
+        }
+
+        .agent:hover .thought-bubble {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Furniture */
+        .chair {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: var(--chair);
+            border-radius: 8px;
+            opacity: 0.7;
+        }
+
+        .plant {
+            position: absolute;
+            font-size: 2rem;
+            opacity: 0.8;
+        }
+
+        .coffee-machine {
+            position: absolute;
+            font-size: 2.5rem;
+            animation: steam 2s infinite;
+        }
+
+        @keyframes steam {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        /* Meeting Room Table */
+        .meeting-table {
+            position: absolute;
+            background: #718096;
+            border-radius: 20px;
+            border: 3px solid #4a5568;
+        }
+
+        /* Control Panel */
+        .control-panel {
+            position: absolute;
+            bottom: 2rem;
+            right: 2rem;
+            background: rgba(30,41,59,0.95);
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid var(--wall);
+            z-index: 1000;
+        }
+
+        .control-panel h3 {
+            font-size: 0.875rem;
+            margin-bottom: 0.75rem;
+            color: #6366f1;
+        }
+
+        .control-btn {
+            display: block;
+            width: 100%;
+            padding: 0.5rem 1rem;
+            margin-bottom: 0.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.3s;
+        }
+
+        .control-btn:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        /* Agent Info Modal */
+        .agent-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(30,41,59,0.98);
+            padding: 2rem;
+            border-radius: 16px;
+            border: 2px solid var(--primary);
+            z-index: 2000;
+            min-width: 400px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+
+        .agent-modal.active {
+            display: block;
+            animation: modalIn 0.3s;
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .agent-modal-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .agent-modal-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+        }
+
+        .agent-modal-info h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .agent-modal-role {
+            color: #94a3b8;
+            font-size: 0.875rem;
+        }
+
+        .agent-modal-details {
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: 6px;
+        }
+
+        .detail-label {
+            color: #94a3b8;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Overlay */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1500;
+        }
+
+        .modal-overlay.active {
+            display: block;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .office-header { flex-direction: column; gap: 1rem; }
+            .agent { width: 50px; height: 50px; font-size: 1.5rem; }
+            .agent-modal { min-width: 90%; }
+        }
+    </style>
+</head>
+<body>
+    <header class="office-header">
+        <h1>🏢 Office View</h1>
+        <div class="office-stats">
+            <div class="stat">
+                <div class="stat-value" id="activeAgents">6/6</div>
+                <div class="stat-label">Agents Active</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="tasksInProgress">3</div>
+                <div class="stat-label">Tasks In Progress</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="nextBreak">15m</div>
+                <div class="stat-label">Next Break</div>
+            </div>
+        </div>
+    </header>
+
+    <div class="office-container">
+        <!-- Grid Background -->
+        <div class="office-grid"></div>
+
+        <!-- Rooms -->
+        <div class="room" id="henryOffice" style="top: 5%; left: 5%; width: 200px; height: 150px;">
+            <div class="room-label">MASTER OFFICE</div>
+        </div>
+
+        <div class="room" id="researchLab" style="top: 5%; left: 65%; width: 280px; height: 200px;">
+            <div class="room-label">RESEARCH LAB</div>
+        </div>
+
+        <div class="room" id="analystOffice" style="top: 55%; left: 5%; width: 250px; height: 180px;">
+            <div class="room-label">ANALYST OFFICE</div>
+        </div>
+
+        <div class="room" id="meetingRoom" style="top: 55%; left: 65%; width: 280px; height: 200px;">
+            <div class="room-label">MEETING ROOM</div>
+        </div>
+
+        <!-- Desks -->
+        <div class="desk computer" id="henryDesk" style="top: 40%; left: 10%; width: 120px; height: 70px;">
+            <div class="desk-status active"></div>
+            <div class="desk-label">Henry</div>
+        </div>
+
+        <div class="desk computer" id="researcherDesk" style="top: 15%; left: 70%; width: 120px; height: 70px;">
+            <div class="desk-status busy"></div>
+            <div class="desk-label">Researcher</div>
+        </div>
+
+        <div class="desk computer" id="analystDesk" style="top: 65%; left: 10%; width: 120px; height: 70px;">
+            <div class="desk-status idle"></div>
+            <div class="desk-label">Analyst</div>
+        </div>
+
+        <div class="desk computer" id="assistantDesk" style="top: 35%; left: 35%; width: 120px; height: 70px;">
+            <div class="desk-status active"></div>
+            <div class="desk-label">Assistant</div>
+        </div>
+
+        <div class="desk computer" id="writerDesk" style="top: 35%; left: 50%; width: 120px; height: 70px;">
+            <div class="desk-status idle"></div>
+            <div class="desk-label">Writer</div>
+        </div>
+
+        <div class="desk computer" id="engineerDesk" style="top: 80%; left: 35%; width: 120px; height: 70px;">
+            <div class="desk-status active"></div>
+            <div class="desk-label">Engineer</div>
+        </div>
+
+        <!-- Meeting Table -->
+        <div class="meeting-table" id="meetingTable" style="top: 60%; left: 72%; width: 180px; height: 100px;"></div>
+
+        <!-- Chairs -->
+        <div class="chair" style="top: 52%; left: 12%;"></div>
+        <div class="chair" style="top: 27%; left: 72%;"></div>
+        <div class="chair" style="top: 77%; left: 12%;"></div>
+        <div class="chair" style="top: 47%; left: 37%;"></div>
+        <div class="chair" style="top: 47%; left: 52%;"></div>
+        <div class="chair" style="top: 92%; left: 37%;"></div>
+
+        <!-- Plants -->
+        <div class="plant" style="top: 2%; left: 2%;">🌿</div>
+        <div class="plant" style="top: 2%; left: 95%;">🪴</div>
+        <div class="plant" style="top: 95%; left: 2%;">🌱</div>
+        <div class="plant" style="top: 95%; left: 95%;">🌵</div>
+
+        <!-- Coffee Machine -->
+        <div class="coffee-machine" style="top: 45%; left: 92%;">☕</div>
+
+        <!-- Agents -->
+        <div class="agent henry" id="agent-henry" style="top: 42%; left: 12%;" data-agent="henry">
+            <div class="agent-avatar">🤖</div>
+            <div class="agent-name">Henry</div>
+            <div class="agent-status online"></div>
+            <div class="thought-bubble">Monitoring team...</div>
+        </div>
+
+        <div class="agent researcher" id="agent-researcher" style="top: 17%; left: 72%;" data-agent="researcher">
+            <div class="agent-avatar">📰</div>
+            <div class="agent-name">Researcher</div>
+            <div class="agent-status busy"></div>
+            <div class="thought-bubble">Researching news...</div>
+        </div>
+
+        <div class="agent analyst" id="agent-analyst" style="top: 67%; left: 12%;" data-agent="analyst">
+            <div class="agent-avatar">📊</div>
+            <div class="agent-name">Analyst</div>
+            <div class="agent-status idle"></div>
+            <div class="thought-bubble">Waiting for tasks...</div>
+        </div>
+
+        <div class="agent assistant" id="agent-assistant" style="top: 37%; left: 37%;" data-agent="assistant">
+            <div class="agent-avatar">🤝</div>
+            <div class="agent-name">Assistant</div>
+            <div class="agent-status online"></div>
+            <div class="thought-bubble">Responding to Telegram...</div>
+        </div>
+
+        <div class="agent writer" id="agent-writer" style="top: 37%; left: 52%;" data-agent="writer">
+            <div class="agent-avatar">📝</div>
+            <div class="agent-name">Writer</div>
+            <div class="agent-status idle"></div>
+            <div class="thought-bubble">Ready to write...</div>
+        </div>
+
+        <div class="agent engineer" id="agent-engineer" style="top: 82%; left: 37%;" data-agent="engineer">
+            <div class="agent-avatar">🔧</div>
+            <div class="agent-name">Engineer</div>
+            <div class="agent-status online"></div>
+            <div class="thought-bubble">Coding dashboard...</div>
+        </div>
+
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <h3>🎮 Controls</h3>
+            <button class="control-btn" onclick="toggleAnimations()">⏸️ Toggle Animations</button>
+            <button class="control-btn" onclick="simulateBreakTime()">☕ Break Time</button>
+            <button class="control-btn" onclick="simulateMeeting()">📋 Team Meeting</button>
+            <button class="control-btn" onclick="resetPositions()">🔄 Reset Positions</button>
+        </div>
+    </div>
+
+    <!-- Agent Info Modal -->
+    <div class="modal-overlay" id="modalOverlay" onclick="closeAgentModal()"></div>
+    <div class="agent-modal" id="agentModal">
+        <button class="close-modal" onclick="closeAgentModal()">×</button>
+        <div class="agent-modal-header">
+            <div class="agent-modal-avatar" id="modalAvatar">🤖</div>
+            <div class="agent-modal-info">
+                <h3 id="modalName">Henry</h3>
+                <div class="agent-modal-role" id="modalRole">Master Orchestrator</div>
+            </div>
+        </div>
+        <div class="agent-modal-details" id="modalDetails"></div>
+    </div>
+
+    <script>
+        // Agent Data
+        const agents = {
+            henry: {
+                name: 'Henry',
+                role: 'Master Orchestrator',
+                model: 'Qwen 3.5 Plus',
+                status: 'online',
+                task: 'Monitoring subagents',
+                desk: 'henryDesk',
+                office: 'henryOffice',
+                emoji: '🤖'
+            },
+            researcher: {
+                name: 'Researcher',
+                role: 'Information Gathering',
+                model: 'Qwen 2.5 72B',
+                status: 'busy',
+                task: 'Daily news digest',
+                desk: 'researcherDesk',
+                office: 'researchLab',
+                emoji: '📰'
+            },
+            analyst: {
+                name: 'Analyst',
+                role: 'Data Analysis',
+                model: 'Claude 3.5 Sonnet',
+                status: 'idle',
+                task: 'Waiting for tasks',
+                desk: 'analystDesk',
+                office: 'analystOffice',
+                emoji: '📊'
+            },
+            assistant: {
+                name: 'Assistant',
+                role: 'Daily Tasks',
+                model: 'Qwen 3.5 Plus',
+                status: 'online',
+                task: 'Telegram responses',
+                desk: 'assistantDesk',
+                office: null,
+                emoji: '🤝'
+            },
+            writer: {
+                name: 'Writer',
+                role: 'Content Creation',
+                model: 'GPT-4 Turbo',
+                status: 'idle',
+                task: 'Waiting for tasks',
+                desk: 'writerDesk',
+                office: null,
+                emoji: '📝'
+            },
+            engineer: {
+                name: 'Engineer',
+                role: 'Code & Automation',
+                model: 'Qwen 2.5 72B',
+                status: 'online',
+                task: 'Dashboard development',
+                desk: 'engineerDesk',
+                office: null,
+                emoji: '🔧'
+            }
+        };
+
+        let animationsEnabled = true;
+        let simulationInterval;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            setupAgentClicks();
+            startSimulations();
+            updateStats();
+        });
+
+        function setupAgentClicks() {
+            document.querySelectorAll('.agent').forEach(agentEl => {
+                agentEl.addEventListener('click', () => {
+                    const agentKey = agentEl.dataset.agent;
+                    openAgentModal(agentKey);
+                });
+            });
+        }
+
+        function openAgentModal(agentKey) {
+            const agent = agents[agentKey];
+            document.getElementById('modalAvatar').textContent = agent.emoji;
+            document.getElementById('modalAvatar').className = `agent-modal-avatar ${agentKey}`;
+            document.getElementById('modalName').textContent = agent.name;
+            document.getElementById('modalRole').textContent = agent.role;
+            
+            document.getElementById('modalDetails').innerHTML = `
+                <div class="detail-row">
+                    <span class="detail-label">Model:</span>
+                    <span>${agent.model}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Status:</span>
+                    <span style="color: ${getStatusColor(agent.status)}">${agent.status.toUpperCase()}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Current Task:</span>
+                    <span>${agent.task}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Location:</span>
+                    <span>${agent.office || 'Open Office'}</span>
+                </div>
+            `;
+            
+            document.getElementById('modalOverlay').classList.add('active');
+            document.getElementById('agentModal').classList.add('active');
+        }
+
+        function closeAgentModal() {
+            document.getElementById('modalOverlay').classList.remove('active');
+            document.getElementById('agentModal').classList.remove('active');
+        }
+
+        function getStatusColor(status) {
+            const colors = { 'online': '#10b981', 'busy': '#f59e0b', 'idle': '#94a3b8', 'break': '#3b82f6' };
+            return colors[status] || '#94a3b8';
+        }
+
+        function startSimulations() {
+            // Random agent movement every 10 seconds
+            simulationInterval = setInterval(() => {
+                if (animationsEnabled) {
+                    simulateAgentMovement();
+                }
+            }, 10000);
+        }
+
+        function simulateAgentMovement() {
+            const agentKeys = Object.keys(agents);
+            const randomAgent = agentKeys[Math.floor(Math.random() * agentKeys.length)];
+            const agentEl = document.getElementById(`agent-${randomAgent}`);
+            
+            // Add walking animation
+            agentEl.classList.add('walking');
+            
+            // Move to random nearby position
+            const currentTop = parseFloat(agentEl.style.top);
+            const currentLeft = parseFloat(agentEl.style.left);
+            
+            const newTop = currentTop + (Math.random() - 0.5) * 10;
+            const newLeft = currentLeft + (Math.random() - 0.5) * 10;
+            
+            agentEl.style.top = `${Math.max(5, Math.min(90, newTop))}%`;
+            agentEl.style.left = `${Math.max(5, Math.min(90, newLeft))}%`;
+            
+            // Remove walking animation after 2 seconds
+            setTimeout(() => {
+                agentEl.classList.remove('walking');
+            }, 2000);
+        }
+
+        function toggleAnimations() {
+            animationsEnabled = !animationsEnabled;
+            if (!animationsEnabled) {
+                clearInterval(simulationInterval);
+            } else {
+                startSimulations();
+            }
+        }
+
+        function simulateBreakTime() {
+            const agentKeys = Object.keys(agents);
+            const coffeeX = 92;
+            const coffeeY = 45;
+            
+            agentKeys.forEach((key, index) => {
+                setTimeout(() => {
+                    const agentEl = document.getElementById(`agent-${key}`);
+                    agentEl.style.top = `${coffeeY}%`;
+                    agentEl.style.left = `${coffeeX - (index * 3)}%`;
+                    agentEl.querySelector('.agent-status').className = 'agent-status break';
+                    agentEl.querySelector('.thought-bubble').textContent = '☕ Coffee break!';
+                }, index * 500);
+            });
+            
+            // Return to desks after 5 seconds
+            setTimeout(() => {
+                resetPositions();
+            }, 5000);
+        }
+
+        function simulateMeeting() {
+            const agentKeys = Object.keys(agents);
+            const meetingPositions = [
+                { top: 58, left: 70 },
+                { top: 58, left: 85 },
+                { top: 75, left: 70 },
+                { top: 75, left: 85 },
+                { top: 66, left: 70 },
+                { top: 66, left: 85 }
+            ];
+            
+            agentKeys.forEach((key, index) => {
+                setTimeout(() => {
+                    const agentEl = document.getElementById(`agent-${key}`);
+                    agentEl.style.top = `${meetingPositions[index].top}%`;
+                    agentEl.style.left = `${meetingPositions[index].left}%`;
+                    agentEl.querySelector('.thought-bubble').textContent = '📋 Team meeting...';
+                }, index * 300);
+            });
+        }
+
+        function resetPositions() {
+            Object.keys(agents).forEach(key => {
+                const agent = agents[key];
+                const agentEl = document.getElementById(`agent-${key}`);
+                const deskEl = document.getElementById(agent.desk);
+                
+                if (deskEl) {
+                    const deskTop = parseFloat(deskEl.style.top);
+                    const deskLeft = parseFloat(deskEl.style.left);
+                    agentEl.style.top = `${deskTop - 5}%`;
+                    agentEl.style.left = `${deskLeft - 5}%`;
+                }
+                
+                agentEl.querySelector('.agent-status').className = `agent-status ${agent.status}`;
+                agentEl.querySelector('.thought-bubble').textContent = agent.task;
+            });
+            
+            updateStats();
+        }
+
+        function updateStats() {
+            const statusCounts = { online: 0, busy: 0, idle: 0, break: 0 };
+            Object.values(agents).forEach(agent => {
+                statusCounts[agent.status]++;
+            });
+            
+            document.getElementById('activeAgents').textContent = `${statusCounts.online + statusCounts.busy}/6`;
+            document.getElementById('tasksInProgress').textContent = statusCounts.busy;
+        }
+    </script>
+</body>
+</html>
