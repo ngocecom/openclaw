@@ -1,0 +1,104 @@
+{
+  "tasks": [
+    {
+      "id": "1",
+      "title": "📰 Daily News Digest",
+      "agent": "Researcher",
+      "agentColor": "fc-event-researcher",
+      "start": "08:00",
+      "end": "09:00",
+      "recurrence": "daily",
+      "description": "Search and compile daily news on international politics, Middle East conflict, oil prices",
+      "priority": "high",
+      "status": "active"
+    },
+    {
+      "id": "2",
+      "title": "🤝 Daily Report",
+      "agent": "Assistant",
+      "agentColor": "fc-event-assistant",
+      "start": "10:00",
+      "end": "10:30",
+      "recurrence": "daily",
+      "description": "Generate and send daily report to Telegram",
+      "priority": "high",
+      "status": "active"
+    },
+    {
+      "id": "3",
+      "title": "🔧 System Health Check",
+      "agent": "Engineer",
+      "agentColor": "fc-event-engineer",
+      "start": "06:00",
+      "end": "06:30",
+      "recurrence": "daily",
+      "description": "Check gateway status, CLIProxy, browser automation, API connectivity",
+      "priority": "medium",
+      "status": "active"
+    },
+    {
+      "id": "4",
+      "title": "📊 Weekly Review",
+      "agent": "Analyst",
+      "agentColor": "fc-event-analyst",
+      "start": "20:00",
+      "end": "21:00",
+      "recurrence": "weekly",
+      "dayOfWeek": "Sunday",
+      "description": "Review weekly performance, update MEMORY.md, consolidate learnings",
+      "priority": "high",
+      "status": "active"
+    },
+    {
+      "id": "5",
+      "title": "📝 Content Creation",
+      "agent": "Writer",
+      "agentColor": "fc-event-writer",
+      "start": "17:00",
+      "end": "18:00",
+      "recurrence": "weekly",
+      "dayOfWeek": "Friday",
+      "description": "Write weekly summary, documentation, tutorials",
+      "priority": "medium",
+      "status": "active"
+    },
+    {
+      "id": "6",
+      "title": "🧠 Memory Review",
+      "agent": "Assistant",
+      "agentColor": "fc-event-assistant",
+      "start": "09:00",
+      "end": "09:30",
+      "recurrence": "daily",
+      "description": "Review and update MEMORY.md with key insights",
+      "priority": "medium",
+      "status": "active"
+    },
+    {
+      "id": "7",
+      "title": "🔍 Market Research",
+      "agent": "Researcher",
+      "agentColor": "fc-event-researcher",
+      "start": "14:00",
+      "end": "16:00",
+      "recurrence": "weekly",
+      "dayOfWeek": "Monday",
+      "description": "Deep research on assigned topics (competitors, trends, opportunities)",
+      "priority": "medium",
+      "status": "active"
+    },
+    {
+      "id": "8",
+      "title": "💰 Cost Analysis",
+      "agent": "Analyst",
+      "agentColor": "fc-event-analyst",
+      "start": "10:00",
+      "end": "11:00",
+      "recurrence": "monthly",
+      "dayOfMonth": "1",
+      "description": "Analyze API costs, optimize spending, report ROI",
+      "priority": "high",
+      "status": "active"
+    }
+  ]
+}
